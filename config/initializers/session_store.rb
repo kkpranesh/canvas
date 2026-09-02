@@ -37,7 +37,16 @@ base_config = {
   secret:
 }
 # Only use same_site :none in environments where we can use secure cookies, as browsers otherwise don't accept it
-if Rails.application.config.force_ssl
+#
+# Also enabled when SIS_EMBED_FRAME_ANCESTORS is set (see
+# config/initializers/sis_embed_csp.rb): a session cookie without
+# SameSite=None is never even attempted by the browser on requests made
+# from inside a cross-origin iframe (the external SIS embedding Canvas),
+# regardless of any third-party-cookie-blocking policy — so this is
+# required, not optional, for that embedding to work at all. Requires
+# Canvas to be served over HTTPS, since Secure cookies are dropped
+# outright over plain HTTP.
+if Rails.application.config.force_ssl || ENV["SIS_EMBED_FRAME_ANCESTORS"].present?
   base_config[:same_site] = :none
   base_config[:secure] = true
 end
